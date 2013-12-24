@@ -1,4 +1,6 @@
-/* client side library for tasks */
+/* Tasks CRUD
+   tasks.js 
+*/
 
 window.onload = function() {
   var pg;
@@ -10,94 +12,88 @@ var thisPage = function() {
 
   var g = {};
   g.msg = {};
-  g.listUrl = '/tasks/';
 
-  // prime the system
+  g.addUrl = '/tasks/';
+  g.listUrl = '/tasks/';
+  g.searchUrl = '/tasks/search?text={@text}';
+  g.completeUrl = '/tasks/complete/';
+
+  // prime system
   function init() {
+    initButtons();
+    refreshList();
+  }
+
+  // handle "list"
+  function refreshList() {
     makeRequest(g.listUrl,'list');
   }
 
-  /* parse the response */
-  function showResponse() {
+  // handle "search"
+  function searchList() {
+    var text;
+
+    text = prompt('Enter search:');
+    if(text) {
+      makeRequest(g.searchUrl.replace('{@text}',encodeURIComponent(text)), 'search');
+    }
+  }
+
+  // handle "add"
+  function addToList() {
+    var text;
+
+    text = prompt('Enter text:');
+    if(text) {
+      makeRequest(g.addUrl, 'add', 'text='+encodeURIComponent(text));
+    }
+  }
+
+  // handle "complete"
+  function completeItem() {
+    makeRequest(g.completeUrl, 'complete', 'id='+encodeURIComponent(this.id));
+  }
+
+  /* parse the returned document */
+  function showList() {
     var elm, li, i, x;
 
     // fill in the list
-    elm = document.getElementById('data');
+    elm = document.getElementById('list-data');
     if(elm) {
       elm.innerHTML = '';
-      for(i=0,x=g.msg.collection.length;i<x;i++) {
+      for(i=0,x=g.msg.tasks.length;i<x;i++) {
         li = document.createElement('li');
-        li.appendChild(document.createTextNode(g.msg.collection[i].text));
+        li.id = g.msg.tasks[i].id;
+        li.appendChild(document.createTextNode(g.msg.tasks[i].text));
+        li.title = 'click to delete';
+        li.onclick = completeItem;
 
-        // see if we have an affordance here
-        try {
-          if(g.msg.collection[i].link.rel==='complete') {
-            if(g.msg.collection[i].link.data) {
-              li.setAttribute('data', g.msg.collection[i].link.data[0].name);
-              li.setAttribute('dvalue', g.msg.collection[i].id);
-            }
-            li.id = g.msg.collection[i].link.rel;
-            li.setAttribute('href', g.msg.collection[i].link.href);
-            li.setAttribute('method', g.msg.collection[i].link.method);
-            li.onclick = clickButton;
-          }
-        }
-        catch (ex) {}
         elm.appendChild(li);
       }
     }
-    showControls();
   }
 
-  // handle possible hypermedia controls
-  function showControls() {
-    var elm, inp, i, x;
+  function initButtons() {
+    var coll;
 
-    // find and render controls
-    elm = document.getElementById('actions');
-    if(elm) {
-      elm.innerHTML = '';
-      for(i=0,x=g.msg.links.length;i<x;i++) {
-        inp = document.createElement('input');
-        inp.type = "button";
-        inp.className = "button";
-        inp.id = g.msg.links[i].rel;
-        inp.setAttribute('method',g.msg.links[i].method);
-        inp.setAttribute('href',g.msg.links[i].href);
-        inp.value = g.msg.links[i].rel;
-        inp.onclick = clickButton;
-        
-        // check for args
-        if(g.msg.links[i].data) {
-          inp.setAttribute('data',g.msg.links[i].data[0].name);
-        }
-        elm.appendChild(inp);
-      }
+    coll = document.getElementsByTagName('input');
+    for(i=0,x=coll.length;i<x;i++) {
+      coll[i].onclick = clickButton;
     }
   }
   function clickButton() {
-    var elm, inp, data;
-    elm = this;
-  
-    if(elm.getAttribute('data')) {
-      if(elm.getAttribute('dvalue')) {
-        inp = elm.getAttribute('dvalue');
-      }
-      else {
-        inp = prompt('Enter '+elm.getAttribute('data')+':');
-      }
-      if(inp) {
-        data = elm.getAttribute('data')+'='+encodeURIComponent(inp);
-        if(elm.getAttribute('method')==='get') {
-          makeRequest(elm.getAttribute('href')+'?'+data, elm.id);        
-        }
-        else {
-          makeRequest(elm.getAttribute('href'), elm.id, data)
-        }    
-      }
-    }
-    else {
-      makeRequest(elm.getAttribute('href'), elm.id);        
+
+    switch(this.id) {
+      case 'add':
+        addToList();
+        break;
+      case 'search':
+        searchList();
+        break;
+      case 'list':
+        refreshList();
+        break;
     }
   }
 
@@ -128,7 +124,7 @@ var thisPage = function() {
           case 'list':
           case 'search':
             g.msg = JSON.parse(ajax.responseText);
-            showResponse();
+            showList();
             break;
           case 'add':
           case 'complete':
