@@ -13,11 +13,12 @@ var thisPage = function() {
   var g = {};
   g.msg = {};
 
+  // memorize the urls
   g.addUrl = '/tasks/';
   g.listUrl = '/tasks/';
-  g.searchUrl = '/tasks/search?text={@text}';
   g.completeUrl = '/tasks/complete/';
-
+  g.searchUrl = '/tasks/search?text={@text}';
+  
   // prime system
   function init() {
     initButtons();

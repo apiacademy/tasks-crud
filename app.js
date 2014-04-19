@@ -42,14 +42,6 @@ function handler(req, res) {
     'Access-Control-Allow-Headers' : '*'
   };
 
-  // add support for CORS
-  var headers = {
-    'Content-Type' : 'application/xml',
-    'Access-Control-Allow-Origin' : '*',
-    'Access-Control-Allow-Methods' : '*',
-    'Access-Control-Allow-Headers' : '*'
-  };
-
   main();
 
   /* process requests */
